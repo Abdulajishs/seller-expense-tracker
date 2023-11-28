@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Expense tracker</title>
+	</head>
+
+	<body>
+		<form onsubmit="updateProduct(event)">
+			<label for="price">Selling Price:</label>
+			<input type="number" id="price" name="price" />
+			<label for="product">Product Name:</label>
+			<input type="text" id="product" name="product" />
+			<button>Add products</button>
+		</form>
+		<h3>Products:</h3>
+		<ul id="items"></ul>
+		<div>Total value worth of products: <span id="total">0</span></div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+		<script>
+			let total = 0;
+			function updateTotal(totalPrice) {
+				document.getElementById('total').innerHTML = totalPrice;
+			}
+			function updateProduct(event) {
+				event.preventDefault();
+				let price = document.getElementById('price').value;
+				let product = document.getElementById('product').value;
+				let value = document.getElementById('total');
+				let obj = {
+					price,
+					product,
+				};
+
+				// console.log(price, product);
+				axios
+					.post(
+						'https://crudcrud.com/api/940e4018f32444a4938ad67bda9cece2/products',
+						obj
+					)
+					.then((res) => {
+						showOnScreen(res.data);
+						console.log(res);
+					})
+					.catch((err) => console.log(err));
+			}
+
+			window.addEventListener('DOMContentLoaded', () => {
+				axios
+					.get('https://crudcrud.com/api/940e4018f32444a4938ad67bda9cece2/products')
+					.then((res) => {
+						console.log(res);
+						for (let i = 0; i < res.data.length; i++) {
+							showOnScreen(res.data[i]);
+						}
+					})
+					.catch((err) => {
+						document.body.innerHTML =
+							document.body.innerHTML + '<h4>Something Went Wrong</h4>';
+						console.log(err);
+					});
+			});
+
+			function showOnScreen(obj) {
+				let parentEle = document.getElementById('items');
+				let chlidEle = document.createElement('li');
+				parentEle.appendChild(chlidEle);
+
+				chlidEle.textContent = `${obj.price} - ${obj.product} `;
+				total = total + parseInt(obj.price);
+				updateTotal(total);
+				let deletion = document.createElement('input');
+				deletion.type = 'button';
+				deletion.value = 'DELETE';
+				deletion.onclick = () => {
+					parentEle.removeChild(chlidEle);
+
+					axios
+						.delete(
+							`https://crudcrud.com/api/940e4018f32444a4938ad67bda9cece2/products/${obj._id}`
+						)
+						.then((res) => {
+							total = total - parseInt(obj.price);
+							updateTotal(total);
+							console.log(res);
+						})
+						.catch((err) => console.log(err));
+				};
+				chlidEle.appendChild(deletion);
+			}
+		</script>
+	</body>
+</html>
